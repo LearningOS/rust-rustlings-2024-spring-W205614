@@ -7,6 +7,5 @@
 
 // I AM NOT DONE
 
-fn main() {
-    println!("Hello {}!");
+fn main() {    println!("Hello world!");
 }
