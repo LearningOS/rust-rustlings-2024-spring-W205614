@@ -8,6 +8,7 @@ use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
 use std::vec::*;
 
+type Link<T> = NonNull<Node<T>>;
 #[derive(Debug, Clone, Copy)]
 struct Node<T> {
     val: T,
@@ -16,26 +17,23 @@ struct Node<T> {
 
 impl<T> Node<T> {
     fn new(t: T) -> Node<T> {
-        Node {
-            val: t,
-            next: None,
-        }
+        Node {val: t,next: None,}
     }
 }
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug)]
 struct LinkedList<T> {
     length: u32,
-    start: Option<NonNull<Node<T>>>,
-    end: Option<NonNull<Node<T>>>,
+    start: Option<Link<T>>,
+    end: Option<Link<T>>,
 }
 
-impl<T> Default for LinkedList<T> {
+impl<T: std::cmp::PartialOrd + Clone> Default for LinkedList<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> LinkedList<T> {
+impl<T: std::cmp::PartialOrd + Clone> LinkedList<T> {
     pub fn new() -> Self {
         Self {
             length: 0,
@@ -43,8 +41,6 @@ impl<T> LinkedList<T> {
             end: None,
         }
     }
-}
-impl<T: PartialOrd + Clone + std::cmp::PartialOrd> LinkedList<T> {
 
     pub fn add(&mut self, obj: T) {
         let mut node = Box::new(Node::new(obj));
@@ -71,46 +67,35 @@ impl<T: PartialOrd + Clone + std::cmp::PartialOrd> LinkedList<T> {
             },
         }
     }
-
-    // 一个获取链表长度的方法
-    pub fn len(&mut self) -> i32 {
-        self.length.try_into().unwrap()  // 直接访问 length 字段
-    }
-
-	pub fn merge(mut list_a:LinkedList<T>,mut list_b:LinkedList<T>) -> Self {
-        let mut merged_list = LinkedList::new();
-        let mut a_current = list_a.start;
-        let mut b_current = list_b.start;
-
-        while a_current.is_some() || b_current.is_some() {
-            let a_next_val = a_current.map(|ptr| unsafe { &(*ptr.as_ptr()).val });
-            let b_next_val = b_current.map(|ptr| unsafe { &(*ptr.as_ptr()).val });
-
-            match (a_next_val, b_next_val) {
-                (Some(a_val), Some(b_val)) => {
-                    if a_val <= b_val {
-                        merged_list.add(a_val.clone());
-                        a_current = unsafe { (*a_current.unwrap().as_ptr()).next };
-                    } else {
-                        merged_list.add(b_val.clone());
-                        b_current = unsafe { (*b_current.unwrap().as_ptr()).next };
-                    }
-                },
-                (Some(a_val), None) => {
-                    merged_list.add(a_val.clone());
-                    a_current = unsafe { (*a_current.unwrap().as_ptr()).next };
-                },
-                (None, Some(b_val)) => {
-                    merged_list.add(b_val.clone());
-                    b_current = unsafe { (*b_current.unwrap().as_ptr()).next };
-                },
-                (None, None) => break,
+    pub fn merge(list_a: LinkedList<T>,list_b: LinkedList<T>) -> Self {
+        let mut list_res = LinkedList::new();
+        let mut node_a = list_a.start;
+        let mut node_b = list_b.start;
+        while node_a.is_some() && node_b.is_some() {
+            let val_a = unsafe { &node_a.unwrap().as_ref().val };
+            let val_b = unsafe { &node_b.unwrap().as_ref().val };
+            if val_a < val_b {
+                list_res.add(val_a.to_owned());
+                node_a = unsafe { node_a.unwrap().as_ref().next };
+            } else {
+                list_res.add(val_b.to_owned());
+                node_b = unsafe { node_b.unwrap().as_ref().next };
             }
         }
-
-        merged_list
+        while node_a.is_some() {
+            let val_a = unsafe { &node_a.unwrap().as_ref().val };
+            list_res.add(val_a.to_owned());
+            node_a = unsafe { node_a.unwrap().as_ref().next };
+        }
+        while node_b.is_some() {
+            let val_b = unsafe { &node_b.unwrap().as_ref().val };
+            list_res.add(val_b.to_owned());
+            node_b = unsafe { node_b.unwrap().as_ref().next };
+        }
+        list_res
     }
 }
+
 
 impl<T> Display for LinkedList<T>
 where
