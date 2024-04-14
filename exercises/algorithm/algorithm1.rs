@@ -2,15 +2,13 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
+//
 
-use std::borrow::{Borrow, BorrowMut};
-use std::f32::consts::E;
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
 use std::vec::*;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 struct Node<T> {
     val: T,
     next: Option<NonNull<Node<T>>>,
@@ -18,20 +16,20 @@ struct Node<T> {
 
 impl<T> Node<T> {
     fn new(t: T) -> Node<T> {
-        Node {val: t,next: None }
+        Node {
+            val: t,
+            next: None,
+        }
     }
 }
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 struct LinkedList<T> {
     length: u32,
     start: Option<NonNull<Node<T>>>,
     end: Option<NonNull<Node<T>>>,
 }
 
-impl<T> Default for LinkedList<T> 
-where
-    T:PartialOrd+Clone,
-{
+impl<T> Default for LinkedList<T> {
     fn default() -> Self {
         Self::new()
     }
@@ -45,6 +43,8 @@ impl<T> LinkedList<T> {
             end: None,
         }
     }
+}
+impl<T: PartialOrd + Clone + std::cmp::PartialOrd> LinkedList<T> {
 
     pub fn add(&mut self, obj: T) {
         let mut node = Box::new(Node::new(obj));
@@ -71,47 +71,50 @@ impl<T> LinkedList<T> {
             },
         }
     }
-	pub fn merge(mut list_a:LinkedList<T>,mut list_b:LinkedList<T>) -> Self
-	{
-		let mut linked_list=Self {
-            length: 0,
-            start: None,
-            end: None,
-        };
 
-        let mut ind_a=0;
-        let mut ind_b=0;
-        while ind_a < list_a.length || ind_b < list_b..length {
-            match (list_a.get(ind_a as i32),list_b.get(ind_b as i32)) {
-                (None, None) => {
-                    return linked_list;
-                }
-                (None, Some(node)) => {
-                    linked_list.add(node.clone());
-                    ind_b+=1;
-                },
-                (Some(node),None) => {
-                    linked_list.add(node.clone());
-                    ind_a+=1;
-                },
-                (Some(nda), Some(ndb)) => {
-                    if nda <= ndb {
-                        linked_list.add(nda.clone());
-                        ind_a +=1;
+    // 一个获取链表长度的方法
+    pub fn len(&mut self) -> i32 {
+        self.length.try_into().unwrap()  // 直接访问 length 字段
+    }
+
+	pub fn merge(mut list_a:LinkedList<T>,mut list_b:LinkedList<T>) -> Self {
+        let mut merged_list = LinkedList::new();
+        let mut a_current = list_a.start;
+        let mut b_current = list_b.start;
+
+        while a_current.is_some() || b_current.is_some() {
+            let a_next_val = a_current.map(|ptr| unsafe { &(*ptr.as_ptr()).val });
+            let b_next_val = b_current.map(|ptr| unsafe { &(*ptr.as_ptr()).val });
+
+            match (a_next_val, b_next_val) {
+                (Some(a_val), Some(b_val)) => {
+                    if a_val <= b_val {
+                        merged_list.add(a_val.clone());
+                        a_current = unsafe { (*a_current.unwrap().as_ptr()).next };
                     } else {
-                        linked_list.add(ndb.clone());
-                        ind_b +=1;
+                        merged_list.add(b_val.clone());
+                        b_current = unsafe { (*b_current.unwrap().as_ptr()).next };
                     }
-                }
+                },
+                (Some(a_val), None) => {
+                    merged_list.add(a_val.clone());
+                    a_current = unsafe { (*a_current.unwrap().as_ptr()).next };
+                },
+                (None, Some(b_val)) => {
+                    merged_list.add(b_val.clone());
+                    b_current = unsafe { (*b_current.unwrap().as_ptr()).next };
+                },
+                (None, None) => break,
             }
         }
-        linked_list
-	}
+
+        merged_list
+    }
 }
 
 impl<T> Display for LinkedList<T>
 where
-    T: Display + PartialOrd+Clone,
+    T: Display,
 {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self.start {
@@ -123,7 +126,7 @@ where
 
 impl<T> Display for Node<T>
 where
-    T: Display + PartialOrd+Clone,
+    T: Display,
 {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self.next {

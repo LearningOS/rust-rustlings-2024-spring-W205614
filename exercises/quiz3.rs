@@ -16,29 +16,16 @@
 //
 // Execute `rustlings hint quiz3` or use the `hint` watch subcommand for a hint.
 
+//
 
-
-pub struct ReportCard {
-    pub grade: f32,
+pub struct ReportCard<T> {
+    pub grade: T,
     pub student_name: String,
     pub student_age: u8,
 }
 
-impl ReportCard {
+impl<T: std::fmt::Display> ReportCard<T> {
     pub fn print(&self) -> String {
-        let letter_grade = if self.grade >= 4.0 {"A+"} 
-        else if self.grade >= 3.7 {"A"}
-        else if self.grade >= 3.3 {"A-"}
-        else if self.grade >= 3.0 {"B+"}
-        else if self.grade >= 2.7 {"B"}
-        else if self.grade >= 2.3 {"B-"}
-        else if self.grade >= 2.0 {"C+"}
-        else if self.grade >= 1.7 {"C"}
-        else if self.grade >= 1.3 {"C-"}
-        else if self.grade >= 1.0 {"D+"}
-        else if self.grade >= 0.7 {"D"}
-        else if self.grade >= 0.3 {"D-"}
-        else {"F"};
         format!("{} ({}) - achieved a grade of {}",
             &self.student_name, &self.student_age, &self.grade)
     }
@@ -63,9 +50,8 @@ mod tests {
 
     #[test]
     fn generate_alphabetic_report_card() {
-        // TODO: Make sure to change the grade here after you finish the exercise.
         let report_card = ReportCard {
-            grade: 2.1,
+            grade: "A+",
             student_name: "Gary Plotter".to_string(),
             student_age: 11,
         };
